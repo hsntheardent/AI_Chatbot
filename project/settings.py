@@ -124,4 +124,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # In settings.py
 import os
-OPENAI_API_KEY = os.environ.get('hf_xxxxxxxxxxxxxxxxx')
+HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
