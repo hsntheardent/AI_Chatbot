@@ -1,6 +1,0 @@
-JsonResponse ka main kaam::
-JsonResponse frontend (browser/app) ko JSON format me response bhejne ke liye use hota hai.
-
-**logic**
-Frontend user ka message AJAX POST request ke through bhejta hai.
-Django view (chat) ye message receive karta hai.

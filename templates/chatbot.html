@@ -11,7 +11,6 @@
       padding: 0;
     }
 
-    /* Floating Chat Button */
     #chat-btn {
       position: fixed;
       bottom: 25px;
@@ -28,9 +27,12 @@
       transition: 0.3s;
       z-index: 9999;
     }
-    #chat-btn:hover { background: #0056b3; transform: scale(1.05); }
 
-    /* Chat Window */
+    #chat-btn:hover {
+      background: #0056b3;
+      transform: scale(1.05);
+    }
+
     #chat-window {
       position: fixed;
       bottom: 100px;
@@ -99,7 +101,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Typing Indicator */
     .typing {
       display: flex;
       align-items: center;
@@ -129,7 +130,6 @@
       100% { opacity: 0.2; }
     }
 
-    /* Chat Input */
     #chat-input {
       display: flex;
       border-top: 1px solid #ddd;
@@ -153,9 +153,10 @@
       transition: 0.2s;
     }
 
-    #send-btn:hover { background: #0056b3; }
+    #send-btn:hover {
+      background: #0056b3;
+    }
 
-    /* Responsive */
     @media (max-width: 480px) {
       #chat-window {
         width: 90%;
@@ -167,80 +168,78 @@
 </head>
 <body>
 
-  <button id="chat-btn">💬</button>
+<button id="chat-btn">💬</button>
 
-  <div id="chat-window">
-    <div id="chat-header">AI Chat Assistant</div>
-    <div id="chat-messages"></div>
-    <div id="chat-input">
-      <input type="text" id="user-msg" placeholder="Type a message..." />
-      <button id="send-btn">Send</button>
-    </div>
+<div id="chat-window">
+  <div id="chat-header">AI Chat Assistant</div>
+  <div id="chat-messages"></div>
+  <div id="chat-input">
+    <input type="text" id="user-msg" placeholder="Type a message..." />
+    <button id="send-btn">Send</button>
   </div>
+</div>
 
-  <script>
-    const chatBtn = document.getElementById("chat-btn");
-    const chatWindow = document.getElementById("chat-window");
-    const chatMessages = document.getElementById("chat-messages");
-    const userMsg = document.getElementById("user-msg");
-    const sendBtn = document.getElementById("send-btn");
+<script>
+  const chatBtn = document.getElementById("chat-btn");
+  const chatWindow = document.getElementById("chat-window");
+  const chatMessages = document.getElementById("chat-messages");
+  const userMsg = document.getElementById("user-msg");
+  const sendBtn = document.getElementById("send-btn");
 
-    // Toggle chat window
-    chatBtn.addEventListener("click", () => {
-      const isVisible = chatWindow.style.display === "flex";
-      chatWindow.style.display = isVisible ? "none" : "flex";
-    });
-//💡 Purpose: Chat box ko toggle on/off karna,||chatBtn → Chat button||click → User button press kare||chatWindow.style.display → Chat window visible hai ya nahi
-    // Add message
-    function addMessage(text, sender) {
-      const div = document.createElement("div");
-      div.classList.add("msg", sender === "user" ? "user-msg" : "bot-msg");
-      div.textContent = text;
-      chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      return div;
+  chatBtn.addEventListener("click", () => {
+    chatWindow.style.display =
+      chatWindow.style.display === "flex" ? "none" : "flex";
+  });
+
+  function addMessage(text, sender) {
+    const div = document.createElement("div");
+    div.classList.add("msg", sender === "user" ? "user-msg" : "bot-msg");
+    div.textContent = text;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return div;
+  }
+
+  function showTyping() {
+    const typingDiv = document.createElement("div");
+    typingDiv.classList.add("typing");
+    typingDiv.innerHTML =
+      '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+    chatMessages.appendChild(typingDiv);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return typingDiv;
+  }
+
+  async function sendMessage() {
+    const msg = userMsg.value.trim();
+    if (!msg) return;
+
+    addMessage(msg, "user");
+    userMsg.value = "";
+
+    const typing = showTyping();
+
+    try {
+      const res = await fetch("/chat/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg })
+      });
+
+      const data = await res.json();
+      chatMessages.removeChild(typing);
+      addMessage(data.reply, "bot");
+    } catch {
+      chatMessages.removeChild(typing);
+      addMessage("⚠️ Server error. Please try again later.", "bot");
     }
+  }
 
-    // Typing indicator||💡 Purpose: UX better banana → user ko lage bot soch raha hai / type kar raha hai
-    function showTyping() {
-      const typingDiv = document.createElement("div");
-      typingDiv.classList.add("typing");
-      typingDiv.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
-      chatMessages.appendChild(typingDiv);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-      return typingDiv;
-    }
- 
-    // Send message to backend
-    async function sendMessage() { // function function-name(sendmessage)
-      const msg = userMsg.value.trim();
-      if (!msg) return;           // !msg , agar messge empty ho to "return;" ka mtlb function usi jaag stop ho jata 
-      addMessage(msg, "user");  // agar user ne message likha aur send button click kiya, to ye message screen par turant show hota hai
-      userMsg.value = "";     // aur ye line user input box clear kar deti hai, taake user next message type kar sake
-
-      const typing = showTyping();//vIska kaam hai chat screen par “Bot is typing…” ya indicator dikhana
-      try {
-        const res = await fetch("/chat/", { // Frontend se backend URL /chat/ par call ja rahi hai
-            method: "POST",                  // HTTP method POST hai, matlab user ka message bheja ja raha hai
-            headers: { "Content-Type": "application/json" }, // Backend ko bata raha hai ke data JSON format me hai
-            body: JSON.stringify({ message: msg }) // User message (e.g. "How are you?") ko JSON string me convert kar raha hai
-                                                  // Example result: '{"message":"How are you?"}'
-        });
-        const data = await res.json();//server ka chatbot reply string se JS object me convert kar deta hai, taake frontend par dikha sake
-
-        chatMessages.removeChild(typing);//Typing indicator hatana Jab bot ka reply aa jaye, user ko lagna chahiye ki bot ab message bhech chuka
-        addMessage(data.reply, "bot");
-      } catch {//Agar server me koi error ho ya network fail ho jaye
-        chatMessages.removeChild(typing);
-        addMessage("⚠️ Server error. Please try again later.", "bot");
-      }
-    }
-
-    sendBtn.addEventListener("click", sendMessage);
-    userMsg.addEventListener("keydown", e => {
-      if (e.key === "Enter") sendMessage();
-    });
-  </script>
+  sendBtn.addEventListener("click", sendMessage);
+  userMsg.addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
 
 </body>
 </html>
