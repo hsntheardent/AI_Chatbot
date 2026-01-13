@@ -1,5 +1,5 @@
-from django.http import JsonResponse
-from django.shortcuts import render
+from django.http import JsonResponse 
+from django.shortcuts import render ,redirect
 from django.views.decorators.csrf import csrf_exempt
 from difflib import SequenceMatcher
 import json
@@ -17,7 +17,7 @@ def load_knowledge_base():
             return json.load(f)
     return {}
 knowledge_base = load_knowledge_base()
-
+#
 
 def similar(a, b):
     """Return a similarity ratio between 0 and 1"""
@@ -236,3 +236,38 @@ def chat(request):
     if not answer:
         answer = ask_ollama(question)
     return JsonResponse({"reply": answer})
+
+
+
+# admin_panel
+
+def save_knowledge_base(data):
+    with open(KNOWLEDGE_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+
+
+def admin_panel(request):
+    knowledge = load_knowledge_base()
+
+    if request.method == "POST":
+        question = request.POST.get("question")
+        answer = request.POST.get("answer")
+        old_question = request.POST.get("old_question")
+
+        if old_question:
+            knowledge.pop(old_question, None)
+
+        knowledge[question] = answer
+        save_knowledge_base(knowledge)
+
+        return redirect("admin_panel")
+
+    return render(request, "admin_panel.html", {"knowledge": knowledge})
+
+
+def delete_faq(request, question):
+    knowledge = load_knowledge_base()
+    knowledge.pop(question, None)
+    save_knowledge_base(knowledge)
+    return redirect("admin_panel")
